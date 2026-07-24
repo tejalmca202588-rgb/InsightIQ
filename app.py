@@ -1,29 +1,41 @@
 import streamlit as st
 from src.data_loader import load_data
+from src.data_cleaner import (
+    get_missing_values,
+    get_duplicate_count,
+    remove_duplicates,
+    fill_missing_values,
+)
 
-
+# -----------------------------
 # Page Configuration
+# -----------------------------
 st.set_page_config(
     page_title="InsightIQ",
     page_icon="📊",
     layout="wide"
 )
 
+# -----------------------------
+# Session State
+# -----------------------------
+if "df" not in st.session_state:
+    st.session_state.df = None
 
-# Main Title
+# -----------------------------
+# Title
+# -----------------------------
 st.title("📊 InsightIQ")
-
 st.subheader("AI-Powered Business Intelligence Platform")
 
-st.write(
-    """
-    InsightIQ transforms raw business data into meaningful insights 
-    using data analysis, visualization, and intelligent recommendations.
-    """
-)
+st.write("""
+InsightIQ transforms raw business data into meaningful insights
+using data analysis, visualization, and intelligent recommendations.
+""")
 
-
-# Sidebar Navigation
+# -----------------------------
+# Sidebar
+# -----------------------------
 st.sidebar.title("Navigation")
 
 option = st.sidebar.selectbox(
@@ -37,31 +49,32 @@ option = st.sidebar.selectbox(
     ]
 )
 
-
-# Home Module
+# -----------------------------
+# Home
+# -----------------------------
 if option == "Home":
 
-    st.header("Welcome to InsightIQ 🚀")
+    st.header("🏠 Welcome to InsightIQ")
 
-    st.info(
-        """
-        Upload your business data and let InsightIQ help you discover:
+    st.info("""
+Upload your CSV or Excel dataset to begin analysis.
 
-        • Sales trends  
-        • Business performance  
-        • Data patterns  
-        • Actionable insights
-        """
-    )
+Current Features:
+- 📂 Upload CSV & Excel files
+- 🧹 Clean datasets
+- 📊 Dashboard (Coming Soon)
+- 🤖 AI Insights (Coming Soon)
+""")
 
-
-# Data Upload Module
+# -----------------------------
+# Data Upload
+# -----------------------------
 elif option == "Data Upload":
 
-    st.header("📂 Upload Your Dataset")
+    st.header("📂 Upload Dataset")
 
     uploaded_file = st.file_uploader(
-        "Choose a CSV or Excel file",
+        "Choose CSV or Excel File",
         type=["csv", "xlsx", "xls"]
     )
 
@@ -71,60 +84,107 @@ elif option == "Data Upload":
 
         if df is not None:
 
-            st.success("File uploaded successfully! 🎉")
+            st.session_state.df = df
 
-            st.subheader("Dataset Preview")
+            st.success("Dataset uploaded successfully ✅")
+
+            st.subheader("Preview")
 
             st.dataframe(df.head())
-
-
-            st.subheader("Dataset Information")
 
             col1, col2 = st.columns(2)
 
             with col1:
-                st.metric(
-                    "Number of Rows",
-                    df.shape[0]
-                )
+                st.metric("Rows", df.shape[0])
 
             with col2:
-                st.metric(
-                    "Number of Columns",
-                    df.shape[1]
-                )
+                st.metric("Columns", df.shape[1])
 
+            st.subheader("Column Data Types")
 
-            st.subheader("Column Information")
-
-            st.write(df.dtypes)
-
+            st.dataframe(df.dtypes.astype(str))
 
         else:
+            st.error("Unable to read file.")
 
-            st.error("Unable to read this file.")
-
-
-# Other Modules (Coming Soon)
+# -----------------------------
+# Data Cleaning
+# -----------------------------
 elif option == "Data Cleaning":
 
-    st.header("🧹 Data Cleaning Module")
-    st.warning("Coming Soon...")
+    st.header("🧹 Data Cleaning")
 
+    if st.session_state.df is None:
 
+        st.warning("Please upload a dataset first.")
+
+    else:
+
+        df = st.session_state.df
+
+        st.subheader("Missing Values")
+
+        missing = get_missing_values(df)
+
+        st.dataframe(missing)
+
+        duplicate_count = get_duplicate_count(df)
+
+        st.metric(
+            "Duplicate Rows",
+            duplicate_count
+        )
+
+        st.divider()
+
+        if st.button("Remove Duplicates"):
+
+            df = remove_duplicates(df)
+
+            st.session_state.df = df
+
+            st.success("Duplicate rows removed.")
+
+        if st.button("Fill Missing Values"):
+
+            df = fill_missing_values(df)
+
+            st.session_state.df = df
+
+            st.success("Missing values filled.")
+
+        st.subheader("Cleaned Dataset")
+
+        st.dataframe(st.session_state.df.head())
+
+        csv = st.session_state.df.to_csv(index=False).encode("utf-8")
+
+        st.download_button(
+            label="⬇ Download Cleaned Dataset",
+            data=csv,
+            file_name="cleaned_dataset.csv",
+            mime="text/csv"
+        )
+
+# -----------------------------
+# Dashboard
+# -----------------------------
 elif option == "Dashboard":
 
-    st.header("📊 Analytics Dashboard")
-    st.warning("Coming Soon...")
+    st.header("📊 Dashboard")
+    st.info("Coming Soon...")
 
-
+# -----------------------------
+# AI Insights
+# -----------------------------
 elif option == "AI Insights":
 
-    st.header("🤖 AI Insights Generator")
-    st.warning("Coming Soon...")
+    st.header("🤖 AI Insights")
+    st.info("Coming Soon...")
 
-
+# -----------------------------
 # Footer
+# -----------------------------
 st.divider()
 
 st.caption(
