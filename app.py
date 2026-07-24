@@ -20,6 +20,7 @@ from src.charts import (
     create_box_plot,
     create_pie_chart,
 )
+from src.ai_insights import generate_insights
 
 # -----------------------------
 # Page Configuration
@@ -350,9 +351,22 @@ elif option == "Dashboard":
 # -----------------------------
 elif option == "AI Insights":
 
-    st.header("🤖 AI Insights")
-    st.info("Coming Soon...")
+    st.header("🤖 AI Business Insights")
 
+    if st.session_state.df is None:
+
+        st.warning("Please upload a dataset first.")
+
+    else:
+
+        df = st.session_state.df
+
+        insights = generate_insights(df)
+
+        st.subheader("Generated Insights")
+
+        for insight in insights:
+            st.success(insight)
 # -----------------------------
 # Footer
 # -----------------------------
