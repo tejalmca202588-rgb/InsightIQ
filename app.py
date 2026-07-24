@@ -12,6 +12,14 @@ from src.eda import (
     missing_values,
     data_types,
 )
+from src.charts import (
+    create_bar_chart,
+    create_line_chart,
+    create_scatter_chart,
+    create_histogram,
+    create_box_plot,
+    create_pie_chart,
+)
 
 # -----------------------------
 # Page Configuration
@@ -240,9 +248,103 @@ elif option == "EDA":
 # -----------------------------
 elif option == "Dashboard":
 
-    st.header("📊 Dashboard")
-    st.info("Coming Soon...")
+    st.header("📊 Interactive Dashboard")
 
+    if st.session_state.df is None:
+
+        st.warning("Please upload a dataset first.")
+
+    else:
+
+        df = st.session_state.df
+
+        numeric_columns = df.select_dtypes(include=["number"]).columns.tolist()
+        categorical_columns = df.select_dtypes(exclude=["number"]).columns.tolist()
+
+        st.subheader("📌 Dashboard Summary")
+
+        col1, col2, col3, col4 = st.columns(4)
+
+        with col1:
+            st.metric("Rows", df.shape[0])
+
+        with col2:
+            st.metric("Columns", df.shape[1])
+
+        with col3:
+            st.metric("Numeric Columns", len(numeric_columns))
+
+        with col4:
+            st.metric("Categorical Columns", len(categorical_columns))
+
+        st.divider()
+
+        chart_type = st.selectbox(
+            "Select Chart",
+            [
+                "Bar Chart",
+                "Line Chart",
+                "Scatter Plot",
+                "Histogram",
+                "Box Plot",
+                "Pie Chart",
+            ]
+        )
+
+        if chart_type in ["Bar Chart", "Line Chart", "Scatter Plot"]:
+
+            if len(numeric_columns) == 0:
+                st.warning("No numeric columns available.")
+            else:
+
+                x_col = st.selectbox("Select X-axis", df.columns)
+
+                y_col = st.selectbox("Select Y-axis", numeric_columns)
+
+                if chart_type == "Bar Chart":
+                    fig = create_bar_chart(df, x_col, y_col)
+
+                elif chart_type == "Line Chart":
+                    fig = create_line_chart(df, x_col, y_col)
+
+                else:
+                    fig = create_scatter_chart(df, x_col, y_col)
+
+                st.plotly_chart(fig, use_container_width=True)
+
+        elif chart_type in ["Histogram", "Box Plot"]:
+
+            if len(numeric_columns) == 0:
+                st.warning("No numeric columns available.")
+            else:
+
+                column = st.selectbox(
+                    "Select Numeric Column",
+                    numeric_columns
+                )
+
+                if chart_type == "Histogram":
+                    fig = create_histogram(df, column)
+
+                else:
+                    fig = create_box_plot(df, column)
+
+                st.plotly_chart(fig, use_container_width=True)
+
+        elif chart_type == "Pie Chart":
+
+            if len(categorical_columns) == 0:
+                st.warning("No categorical columns available.")
+            else:
+
+                column = st.selectbox(
+                    "Select Category",
+                    categorical_columns
+                )
+
+                fig = create_pie_chart(df, column)
+
+                st.plotly_chart(fig, use_container_width=True)
 # -----------------------------
 # AI Insights
 # -----------------------------
