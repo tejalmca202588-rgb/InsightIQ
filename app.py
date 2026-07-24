@@ -6,6 +6,12 @@ from src.data_cleaner import (
     remove_duplicates,
     fill_missing_values,
 )
+from src.eda import (
+    dataset_summary,
+    numerical_summary,
+    missing_values,
+    data_types,
+)
 
 # -----------------------------
 # Page Configuration
@@ -41,11 +47,12 @@ st.sidebar.title("Navigation")
 option = st.sidebar.selectbox(
     "Choose Module",
     [
-        "Home",
-        "Data Upload",
-        "Data Cleaning",
-        "Dashboard",
-        "AI Insights"
+    "Home",
+    "Data Upload",
+    "Data Cleaning",
+    "EDA",
+    "Dashboard",
+    "AI Insights"
     ]
 )
 
@@ -166,6 +173,68 @@ elif option == "Data Cleaning":
             mime="text/csv"
         )
 
+elif option == "EDA":
+
+    st.header("📊 Exploratory Data Analysis")
+
+    if st.session_state.df is None:
+
+        st.warning("Please upload a dataset first.")
+
+    else:
+
+        df = st.session_state.df
+
+        # -----------------------
+        # Dataset Summary
+        # -----------------------
+
+        st.subheader("📋 Dataset Summary")
+
+        summary = dataset_summary(df)
+
+        col1, col2, col3 = st.columns(3)
+
+        with col1:
+            st.metric("Rows", summary["Rows"])
+            st.metric("Missing Values", summary["Missing Values"])
+
+        with col2:
+            st.metric("Columns", summary["Columns"])
+            st.metric("Duplicate Rows", summary["Duplicate Rows"])
+
+        with col3:
+            st.metric("Memory (KB)", summary["Memory Usage (KB)"])
+
+        st.divider()
+
+        # -----------------------
+        # Numerical Statistics
+        # -----------------------
+
+        st.subheader("📈 Numerical Statistics")
+
+        st.dataframe(numerical_summary(df))
+
+        st.divider()
+
+        # -----------------------
+        # Missing Values
+        # -----------------------
+
+        st.subheader("🚨 Missing Values")
+
+        st.dataframe(missing_values(df))
+
+        st.divider()
+
+        # -----------------------
+        # Data Types
+        # -----------------------
+
+        st.subheader("🏷 Data Types")
+
+        st.dataframe(data_types(df))
 # -----------------------------
 # Dashboard
 # -----------------------------
