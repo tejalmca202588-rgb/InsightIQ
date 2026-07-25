@@ -28,7 +28,9 @@ from src.charts import (
 from src.ai_insights import generate_insights
 from src.business_metrics import get_business_metrics
 from src.filters import apply_filters
-
+from src.heatmap import create_correlation_heatmap
+from src.reports import generate_report
+from src.pdf_report import generate_pdf
 # -----------------------------
 # Page Configuration
 # -----------------------------
@@ -72,7 +74,8 @@ option = st.sidebar.selectbox(
         "Data Cleaning",
         "EDA",
         "Dashboard",
-        "AI Insights"
+        "AI Insights",
+        "Reports"
     ]
 )
 
@@ -436,7 +439,76 @@ elif option == "Dashboard":
 
                 st.plotly_chart(fig, use_container_width=True)
 
+         # -----------------------------
+        # Correlation Heatmap
+        # -----------------------------
 
+        st.divider()
+
+        st.subheader("🔥 Correlation Heatmap")
+
+        heatmap_fig = create_correlation_heatmap(df)
+
+        if heatmap_fig is not None:
+            st.plotly_chart(heatmap_fig, use_container_width=True)
+        else:
+            st.info(
+                "At least two numeric columns are required to generate a correlation heatmap."
+            )
+
+        # -----------------------------
+
+# -----------------------------
+# Reports
+# -----------------------------
+
+elif option == "Reports":
+
+    st.header("📄 Dataset Report")
+
+    if st.session_state.df is None:
+
+        st.warning("Please upload a dataset first.")
+
+    else:
+
+        df = st.session_state.df
+
+        report_df = generate_report(df)
+
+        st.subheader("Generated Report")
+
+        st.dataframe(report_df, use_container_width=True)
+
+        # -----------------------
+        # CSV Report
+        # -----------------------
+
+        csv = report_df.to_csv(index=False).encode("utf-8")
+
+        st.download_button(
+            label="⬇ Download CSV Report",
+            data=csv,
+            file_name="InsightIQ_Report.csv",
+            mime="text/csv"
+        )
+
+        # -----------------------
+        # PDF Report
+        # -----------------------
+
+        pdf_filename = "InsightIQ_Report.pdf"
+
+        generate_pdf(report_df, pdf_filename)
+
+        with open(pdf_filename, "rb") as pdf_file:
+
+            st.download_button(
+                label="📄 Download PDF Report",
+                data=pdf_file,
+                file_name="InsightIQ_Report.pdf",
+                mime="application/pdf"
+            )
 # -----------------------------
 # AI Insights
 # -----------------------------
