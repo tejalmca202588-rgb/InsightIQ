@@ -27,7 +27,7 @@ from src.charts import (
 
 from src.ai_insights import generate_insights
 from src.business_metrics import get_business_metrics
-
+from src.filters import apply_filters
 
 # -----------------------------
 # Page Configuration
@@ -306,11 +306,6 @@ elif option == "EDA":
         st.dataframe(data_types(df))
 
 
-
-# -----------------------------
-# Dashboard
-# -----------------------------
-
 # -----------------------------
 # Dashboard
 # -----------------------------
@@ -325,8 +320,7 @@ elif option == "Dashboard":
 
     else:
 
-        df = st.session_state.df
-
+        df = apply_filters(st.session_state.df)
         # -----------------------------
         # Business Metrics
         # -----------------------------
