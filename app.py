@@ -509,6 +509,8 @@ elif option == "Reports":
                 file_name="InsightIQ_Report.pdf",
                 mime="application/pdf"
             )
+       
+
 # -----------------------------
 # AI Insights
 # -----------------------------
@@ -517,25 +519,27 @@ elif option == "AI Insights":
 
     st.header("🤖 AI Business Insights")
 
-
     if st.session_state.df is None:
 
         st.warning("Please upload a dataset first.")
 
-
     else:
 
-        insights = generate_insights(
-            st.session_state.df
-        )
-
+        insights = generate_insights(st.session_state.df)
 
         for insight in insights:
 
-            st.success(insight)
+            if "Recommendation" in insight or "AI" in insight:
+                st.info(insight)
 
+            elif "⚠" in insight:
+                st.warning(insight)
 
+            elif "📈" in insight or "📊" in insight:
+                st.success(insight)
 
+            else:
+                st.write(insight)
 # -----------------------------
 # Footer
 # -----------------------------
