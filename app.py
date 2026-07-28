@@ -34,6 +34,8 @@ from src.filters import apply_filters
 from src.heatmap import create_correlation_heatmap
 from src.reports import generate_report
 from src.pdf_report import generate_pdf
+from src.chatbot import ask_dataset
+from src.data_quality import get_data_quality
 
 # =============================================================
 # Cached wrappers
@@ -251,12 +253,17 @@ option = st.sidebar.radio(
         "📊 EDA",
         "📈 Dashboard",
         "🤖 AI Insights",
+        "💬 AI Chat",
         "📄 Reports",
     ]
 )
 
-# Strip the emoji prefix so downstream logic is unchanged
-option = option.split(" ", 1)[1]
+# Remove emoji prefix only when emoji exists
+if " " in option:
+    option = option.split(" ", 1)[1]
+
+# Debug (remove later)
+st.write(option)
 
 if st.session_state.df is not None:
     st.sidebar.markdown("---")
@@ -514,6 +521,49 @@ elif option == "Dashboard":
 
         st.divider()
 
+                # ---------------- Data Health ----------------
+
+        section_header("🩺 Dataset Health")
+
+        quality = get_data_quality(df)
+
+        col1, col2, col3, col4 = st.columns(4)
+
+        with col1:
+            st.metric(
+                "🏆 Health Score",
+                f"{quality['Health Score']}%"
+            )
+
+        with col2:
+            st.metric(
+                "✅ Completeness",
+                f"{quality['Completeness']}%"
+            )
+
+        with col3:
+            st.metric(
+                "⚠ Missing Values",
+                quality["Missing Values"]
+            )
+
+        with col4:
+            st.metric(
+                "📄 Duplicate Rows",
+                quality["Duplicate Rows"]
+            )
+
+        if quality["Health Score"] >= 90:
+            st.success("🟢 Excellent Dataset Quality")
+
+        elif quality["Health Score"] >= 70:
+            st.warning("🟡 Good Dataset Quality")
+
+        else:
+            st.error("🔴 Poor Dataset Quality")
+
+        st.divider()
+
         # ---------------- Business Metrics ----------------
         section_header("📈 Business Metrics")
 
@@ -648,6 +698,369 @@ elif option == "Dashboard":
 
 
 # =============================================================
+# AI chat
+# =============================================================
+# =============================================================
+# =============================================================
+# AI Chat
+# =============================================================
+
+elif option == "AI Chat":
+
+    section_header("💬 AI Chat Assistant")
+
+
+    if st.session_state.df is None:
+
+        st.warning("Please upload a dataset first.")
+
+
+    else:
+
+        df = st.session_state.df
+
+
+        st.write(
+            "Ask questions about your dataset like a business analyst."
+        )
+
+
+        # Initialize chat history
+
+        if "chat_history" not in st.session_state:
+
+            st.session_state.chat_history = []
+
+
+
+        # Suggested Questions
+
+        st.markdown("### 💡 Try asking:")
+
+
+        col1, col2, col3 = st.columns(3)
+
+
+        with col1:
+
+            if st.button(
+                "📊 Dataset Summary",
+                key="summary_btn"
+            ):
+
+                user_question = "summary"
+
+
+
+        with col2:
+
+            if st.button(
+                "❓ Missing Values",
+                key="missing_btn"
+            ):
+
+                user_question = "missing values"
+
+
+
+        with col3:
+
+            if st.button(
+                "🔢 Numeric Columns",
+                key="numeric_btn"
+            ):
+
+                user_question = "numeric columns"
+
+
+
+        # User Input
+
+        user_input = st.text_input(
+
+            "Ask your question",
+
+            placeholder="Example: Give me insights about this dataset",
+
+            key="chat_input"
+
+        )
+
+
+
+        ask = st.button(
+            "🚀 Ask InsightIQ",
+            key="ask_button"
+        )
+
+
+
+        if ask:
+
+
+            question = user_input.lower()
+
+
+
+            if question.strip() == "":
+
+                st.warning(
+                    "Please enter a question."
+                )
+
+
+
+            else:
+
+
+                # Rows
+
+                if "row" in question:
+
+
+                    answer = (
+
+                        f"📌 Your dataset contains "
+
+                        f"{df.shape[0]:,} rows."
+
+                    )
+
+
+
+                # Columns
+
+                elif "column" in question:
+
+
+                    answer = (
+
+                        f"📌 Your dataset contains "
+
+                        f"{df.shape[1]} columns."
+
+                    )
+
+
+
+                # Missing values
+
+                elif "missing" in question:
+
+
+                    answer = (
+
+                        f"📌 Missing values found: "
+
+                        f"{df.isnull().sum().sum()}"
+
+                    )
+
+
+
+                # Duplicate
+
+                elif "duplicate" in question:
+
+
+                    answer = (
+
+                        f"📌 Duplicate rows found: "
+
+                        f"{df.duplicated().sum()}"
+
+                    )
+
+
+
+                # Numeric columns
+
+                elif "numeric" in question:
+
+
+                    answer = (
+
+                        "🔢 Numeric columns:\n\n"
+
+                        +
+
+                        ", ".join(
+
+                            df.select_dtypes(
+
+                                include="number"
+
+                            ).columns
+
+                        )
+
+                    )
+
+
+
+                # Categorical columns
+
+                elif "categorical" in question:
+
+
+                    answer = (
+
+                        "📂 Categorical columns:\n\n"
+
+                        +
+
+                        ", ".join(
+
+                            df.select_dtypes(
+
+                                exclude="number"
+
+                            ).columns
+
+                        )
+
+                    )
+
+
+
+                # Summary
+
+                elif "summary" in question:
+
+
+                    answer = (
+
+                        "📊 Dataset Summary\n\n"
+
+                        f"Rows: {df.shape[0]:,}\n"
+
+                        f"Columns: {df.shape[1]}\n"
+
+                        f"Missing Values: {df.isnull().sum().sum()}\n"
+
+                        f"Duplicate Rows: {df.duplicated().sum()}"
+
+                    )
+
+
+
+                # AI Insights Integration ⭐
+
+                elif (
+
+                    "insight" in question
+
+                    or "recommendation" in question
+
+                    or "analysis" in question
+
+                ):
+
+
+                    insights = generate_insights(df)
+
+
+                    answer = (
+
+                        "🤖 AI Generated Insights:\n\n"
+
+                        +
+
+                        "\n\n".join(insights)
+
+                    )
+
+
+
+                else:
+
+
+                    answer = (
+
+                        "🤖 I can help you with:\n\n"
+
+                        "• Dataset summary\n"
+
+                        "• Rows and columns\n"
+
+                        "• Missing values\n"
+
+                        "• Duplicate records\n"
+
+                        "• Numeric columns\n"
+
+                        "• Categorical columns\n"
+
+                        "• Business insights\n"
+
+                        "• Recommendations"
+
+                    )
+
+
+
+                # Store conversation
+
+                st.session_state.chat_history.append(
+
+                    {
+
+                        "role": "user",
+
+                        "message": user_input
+
+                    }
+
+                )
+
+
+
+                st.session_state.chat_history.append(
+
+                    {
+
+                        "role": "assistant",
+
+                        "message": answer
+
+                    }
+
+                )
+
+
+
+        st.divider()
+
+
+
+        # Display Chat History
+
+        for chat in st.session_state.chat_history:
+
+
+            if chat["role"] == "user":
+
+
+                with st.chat_message("user"):
+
+                    st.write(
+
+                        chat["message"]
+
+                    )
+
+
+            else:
+
+
+                with st.chat_message("assistant"):
+
+                    st.write(
+
+                        chat["message"]
+
+                    )
+                
 # Reports
 # =============================================================
 elif option == "Reports":
