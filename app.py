@@ -90,96 +90,168 @@ st.set_page_config(
 )
 
 # =============================================================
-# Global CSS — professional theme
+# Global CSS — Professional Theme
 # =============================================================
 st.markdown("""
 <style>
+
+/* ============================= */
+/* Main App */
+/* ============================= */
 
 .main {
     background-color: #f8f9fc;
 }
 
-/* ---------- KPI Cards ---------- */
-.kpi-card {
-    background: white;
-    padding: 22px 18px;
-    border-radius: 16px;
-    box-shadow: 0px 4px 14px rgba(0,0,0,0.06);
-    text-align: center;
-    border: 1px solid #eef0f6;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
+/* ============================= */
+/* Hero Banner */
+/* ============================= */
 
-.kpi-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0px 8px 20px rgba(0,0,0,0.10);
-}
-
-.kpi-icon {
-    font-size: 26px;
-    margin-bottom: 6px;
-}
-
-.kpi-title {
-    color: #6b7280;
-    font-size: 14px;
-    font-weight: 600;
-    letter-spacing: 0.3px;
-    text-transform: uppercase;
-    margin-bottom: 6px;
-}
-
-.kpi-value {
-    font-size: 30px;
-    color: #1f2937;
-    font-weight: 700;
-}
-
-/* ---------- Section headers ---------- */
-.section-header {
-    font-size: 22px;
-    font-weight: 700;
-    color: #1f2937;
-    margin: 10px 0 14px 0;
-    padding-left: 10px;
-    border-left: 5px solid #4F46E5;
-}
-
-/* ---------- Hero banner ---------- */
 .hero-banner {
     background: linear-gradient(90deg, #4F46E5, #06B6D4);
-    padding: 28px 30px;
-    border-radius: 16px;
+    padding: 30px;
+    border-radius: 18px;
     color: white;
-    margin-bottom: 22px;
+    text-align: center;
+    margin-bottom: 25px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
 }
 
 .hero-banner h1 {
     margin: 0;
-    font-size: 30px;
+    font-size: 38px;
+    font-weight: 700;
+}
+
+.hero-banner h3 {
+    margin-top: 10px;
+    margin-bottom: 10px;
+    font-size: 22px;
+    font-weight: 500;
 }
 
 .hero-banner p {
-    font-size: 16px;
-    margin-top: 8px;
+    margin-top: 10px;
+    font-size: 17px;
     opacity: 0.95;
 }
 
-/* ---------- Sidebar ---------- */
+/* ============================= */
+/* Section Header */
+/* ============================= */
+
+.section-header {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1f2937;
+    margin-top: 10px;
+    margin-bottom: 20px;
+    border-left: 6px solid #4F46E5;
+    padding-left: 12px;
+}
+
+/* ============================= */
+/* KPI Cards */
+/* ============================= */
+
+.kpi-card {
+    background: white;
+    padding: 22px;
+    border-radius: 16px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    border: 1px solid #edf2f7;
+    text-align: center;
+    transition: 0.3s;
+}
+
+.kpi-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 22px rgba(0,0,0,0.12);
+}
+
+.kpi-icon {
+    font-size: 30px;
+    margin-bottom: 8px;
+}
+
+.kpi-title {
+    font-size: 14px;
+    color: #6b7280;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.kpi-value {
+    font-size: 30px;
+    color: #111827;
+    font-weight: bold;
+    margin-top: 8px;
+}
+
+/* ============================= */
+/* Streamlit Metric Cards */
+/* ============================= */
+
+div[data-testid="metric-container"] {
+    background: white;
+    border-radius: 16px;
+    padding: 18px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+    border: 1px solid #e5e7eb;
+}
+
+div[data-testid="metric-container"]:hover {
+    transform: translateY(-3px);
+    transition: 0.2s;
+}
+
+/* ============================= */
+/* Buttons */
+/* ============================= */
+
+.stButton > button {
+    border-radius: 12px;
+    font-weight: 600;
+}
+
+/* ============================= */
+/* Sidebar */
+/* ============================= */
+
 section[data-testid="stSidebar"] {
     background-color: #111827;
 }
 
 section[data-testid="stSidebar"] * {
-    color: #f3f4f6 !important;
+    color: white !important;
 }
 
-/* Chart containers */
+/* ============================= */
+/* Tables */
+/* ============================= */
+
+[data-testid="stDataFrame"] {
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+/* ============================= */
+/* Charts */
+/* ============================= */
+
 div[data-testid="stPlotlyChart"] {
     background: white;
-    border-radius: 14px;
+    border-radius: 16px;
     padding: 10px;
-    box-shadow: 0px 2px 10px rgba(0,0,0,0.05);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+/* ============================= */
+/* Success Boxes */
+/* ============================= */
+
+div[data-testid="stAlert"] {
+    border-radius: 12px;
 }
 
 </style>
@@ -276,74 +348,137 @@ if st.session_state.df is not None:
 # =============================================================
 # Home
 # =============================================================
+
+# =============================================================
+# Home
+# =============================================================
 if option == "Home":
 
     st.markdown(
         """
         <div class="hero-banner">
             <h1>📊 InsightIQ</h1>
-            <p>AI-Powered Business Analytics Platform — Analyze • Visualize • Discover</p>
+            <h3>AI-Powered Business Intelligence Platform</h3>
+            <p>
+            Transform raw datasets into meaningful insights using
+            Artificial Intelligence, Interactive Dashboards and Business Analytics.
+            </p>
         </div>
         """,
         unsafe_allow_html=True
     )
 
-    st.write(
-        """
-        ### AI-Powered Business Intelligence Platform
+    st.divider()
 
-        InsightIQ transforms raw business data into meaningful insights
-        using data cleaning, exploratory analysis, interactive visualization,
-        and intelligent recommendations.
+    st.markdown(
+        """
+        ## 🚀 Welcome to InsightIQ
+
+        InsightIQ is an AI-powered Business Intelligence platform developed
+        to help analysts transform raw datasets into actionable business insights.
+
+        The platform combines data cleaning, visualization, AI-generated
+        recommendations and automated reporting in one place.
         """
     )
 
-    section_header("✨ Current Features")
+    st.divider()
 
-    col1, col2, col3 = st.columns(3)
+    section_header("✨ Key Features")
+
+    col1, col2 = st.columns(2)
 
     with col1:
+
         st.success(
             """
-            **📂 Data Upload**
+### 📂 Data Management
 
-            ✔ CSV Support
-            ✔ Excel Support
-            ✔ Dataset Preview
+✅ Upload CSV Dataset
+
+✅ Dataset Preview
+
+✅ Data Cleaning
+
+✅ Missing Value Detection
+
+✅ Duplicate Detection
+
+✅ Download Clean Dataset
+"""
+        )
+
+        st.success(
             """
+### 📈 Data Visualization
+
+✅ Exploratory Data Analysis
+
+✅ Interactive Dashboard
+
+✅ KPI Cards
+
+✅ Charts & Graphs
+"""
         )
 
     with col2:
+
         st.success(
             """
-            **🧹 Data Cleaning**
+### 🤖 AI Features
 
-            ✔ Missing Values
-            ✔ Duplicate Detection
-            ✔ Clean Dataset Download
-            """
+✅ AI Insights
+
+✅ AI Chat Assistant
+
+✅ Business Recommendations
+
+✅ Dataset Summary
+"""
         )
 
-    with col3:
         st.success(
             """
-            **📊 Analytics**
+### 📄 Reporting
 
-            ✔ EDA
-            ✔ Dashboard
-            ✔ AI Insights
-            """
+✅ Dataset Report
+
+✅ CSV Export
+
+✅ PDF Report
+
+✅ Business Summary
+"""
         )
+
+    st.divider()
+
+    section_header("🛠 Technologies Used")
+
+    tech1, tech2, tech3, tech4 = st.columns(4)
+
+    tech1.metric("🐍 Python", "✔")
+
+    tech2.metric("📊 Pandas", "✔")
+
+    tech3.metric("📈 Plotly", "✔")
+
+    tech4.metric("⚡ Streamlit", "✔")
 
     st.divider()
 
     st.info(
         """
-        🚀 Upload your dataset and let InsightIQ help you discover
-        patterns, trends, and actionable business insights.
-        """
-    )
+### 🚀 Get Started
 
+Upload your business dataset using the **Data Upload** module and let
+InsightIQ automatically clean, analyze, visualize and generate AI-powered
+business insights.
+
+Happy Analyzing! 📊
+"""
+    )
 
 # =============================================================
 # Data Upload
