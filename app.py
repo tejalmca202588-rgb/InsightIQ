@@ -1061,7 +1061,7 @@ elif option == "AI Chat":
 
                     )
                 
-# Reports
+        # Reports
 # =============================================================
 elif option == "Reports":
 
@@ -1072,6 +1072,45 @@ elif option == "Reports":
 
     else:
         df = st.session_state.df
+
+        # ===============================
+        # Dataset Summary
+        # ===============================
+        st.subheader("📊 Dataset Overview")
+
+        col1, col2, col3, col4 = st.columns(4)
+
+        col1.metric(
+            "Rows",
+            f"{df.shape[0]:,}"
+        )
+
+        col2.metric(
+            "Columns",
+            df.shape[1]
+        )
+
+        col3.metric(
+            "Missing Values",
+            df.isnull().sum().sum()
+        )
+
+        col4.metric(
+            "Duplicate Rows",
+            df.duplicated().sum()
+        )
+
+        st.divider()
+
+        # ===============================
+        # AI Summary
+        # ===============================
+        st.subheader("🤖 AI Summary")
+
+        insights = generate_insights(df)
+
+        for insight in insights[:8]:
+            st.success(insight)
 
         try:
             report_df = cached_generate_report(df)
