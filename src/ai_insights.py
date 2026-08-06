@@ -1,139 +1,158 @@
 import pandas as pd
+import numpy as np
 
 
 def generate_insights(df):
     """
-    Generate AI-powered business insights from the dataset.
+    Generate clean business insights from dataset.
     """
 
     insights = []
 
-    # Dataset size
+    rows, columns = df.shape
+
+    # Dataset Overview
     insights.append(
-        f"📊 Dataset contains {df.shape[0]} rows and {df.shape[1]} columns."
+        f"📊 Dataset contains **{rows:,} rows** and **{columns} columns**."
     )
 
-    # Missing values
+
+    # Missing Values
     missing = df.isnull().sum().sum()
 
     if missing == 0:
-        insights.append("✅ No missing values found.")
+        insights.append(
+            "✅ No missing values found."
+        )
     else:
-        insights.append(f"⚠ Dataset contains {missing} missing values.")
+        insights.append(
+            f"⚠ {missing:,} missing values detected. "
+            "Consider cleaning before analysis."
+        )
 
-    # Duplicate rows
+
+    # Duplicate Rows
     duplicates = df.duplicated().sum()
 
     if duplicates == 0:
-        insights.append("✅ No duplicate rows found.")
+        insights.append(
+            "✅ No duplicate records found."
+        )
     else:
-        insights.append(f"⚠ Dataset contains {duplicates} duplicate rows.")
+        insights.append(
+            f"⚠ {duplicates:,} duplicate records detected."
+        )
 
-    # Numeric columns
-    numeric_cols = df.select_dtypes(include="number").columns
+
+    # Numeric Analysis
+    numeric_cols = df.select_dtypes(
+        include=np.number
+    ).columns
+
 
     if len(numeric_cols) > 0:
 
-        highest_mean = df[numeric_cols].mean().idxmax()
-        lowest_mean = df[numeric_cols].mean().idxmin()
+        means = df[numeric_cols].mean()
 
-        insights.append(f"📈 '{highest_mean}' has the highest average value.")
-        insights.append(f"📉 '{lowest_mean}' has the lowest average value.")
+        highest = means.idxmax()
+        lowest = means.idxmin()
 
-    # Recommendation
-    insights.append(
-        "💡 Recommendation: Review columns with unusually high values and investigate trends using the dashboard."
-    )
 
-    # -----------------------------
-    # Categorical columns
-    # -----------------------------
-    categorical_cols = df.select_dtypes(include="object").columns
-
-    for col in categorical_cols:
-        if df[col].nunique() > 0:
-            top_value = df[col].mode()[0]
-            insights.append(
-                f"🏆 Most common value in '{col}' is '{top_value}'."
-            )
-
-    # -----------------------------
-    # Numeric summary
-    # -----------------------------
-    for col in numeric_cols:
         insights.append(
-            f"📊 {col}: Mean={df[col].mean():.2f}, Max={df[col].max():.2f}, Min={df[col].min():.2f}"
+            f"📈 **{highest}** has the highest average value "
+            f"({means[highest]:,.2f})."
         )
 
-    # -----------------------------
+
+        insights.append(
+            f"📉 **{lowest}** has the lowest average value "
+            f"({means[lowest]:,.2f})."
+        )
+
+
     # Outlier Detection
-    # -----------------------------
+
+    outlier_found = False
+
     for col in numeric_cols:
 
-        q1 = df[col].quantile(0.25)
-        q3 = df[col].quantile(0.75)
-        iqr = q3 - q1
+        Q1 = df[col].quantile(0.25)
+        Q3 = df[col].quantile(0.75)
 
-        lower = q1 - 1.5 * iqr
-        upper = q3 + 1.5 * iqr
+        IQR = Q3 - Q1
 
-        outliers = df[(df[col] < lower) | (df[col] > upper)]
+        outliers = df[
+            (df[col] < Q1 - 1.5 * IQR)
+            |
+            (df[col] > Q3 + 1.5 * IQR)
+        ]
+
 
         if len(outliers) > 0:
+
             insights.append(
-                f"⚠ {len(outliers)} outliers detected in '{col}'."
+                f"⚠ **{len(outliers):,} unusual values detected in {col}.**"
             )
 
-    # -----------------------------
-    # Correlation Analysis
-    # -----------------------------
-    if len(numeric_cols) >= 2:
+            outlier_found = True
+
+            break
+
+
+    if not outlier_found:
+
+        insights.append(
+            "✅ No significant outliers detected."
+        )
+
+
+    # Correlation
+
+    if len(numeric_cols) > 1:
 
         corr = df[numeric_cols].corr()
 
-        max_corr = 0
-        pair = None
+        corr_pairs = (
+            corr
+            .where(
+                np.triu(
+                    np.ones(corr.shape),
+                    k=1
+                ).astype(bool)
+            )
+            .stack()
+        )
 
-        for i in range(len(corr.columns)):
-            for j in range(i + 1, len(corr.columns)):
 
-                value = abs(corr.iloc[i, j])
+        if not corr_pairs.empty:
 
-                if value > max_corr:
-                    max_corr = value
-                    pair = (
-                        corr.columns[i],
-                        corr.columns[j]
-                    )
+            pair = corr_pairs.idxmax()
 
-        if pair:
+            value = corr_pairs.max()
+
+
             insights.append(
-                f"🔗 Strongest correlation is between '{pair[0]}' and '{pair[1]}' ({max_corr:.2f})."
+                f"🔗 Strong relationship found between "
+                f"**{pair[0]}** and **{pair[1]}** "
+                f"(correlation: {value:.2f})."
             )
 
-    # -----------------------------
-    # AI Recommendations
-    # -----------------------------
-    insights.append("")
-    insights.append("📌 AI Recommendations")
 
-    if missing > 0:
-        insights.append(
-            "• Clean missing values before performing predictive analysis."
-        )
-
-    if duplicates > 0:
-        insights.append(
-            "• Remove duplicate records to improve data quality."
-        )
-
-    if len(numeric_cols) > 0:
-        insights.append(
-            "• Investigate columns with unusually high averages."
-        )
+    # Recommendations
 
     insights.append(
-        "• Use the Dashboard module to explore trends interactively."
+        """
+💡 **AI Recommendations**
+
+• Clean missing values before advanced analysis.
+
+• Remove duplicate records to improve accuracy.
+
+• Investigate unusual values and outliers.
+
+• Explore trends using interactive dashboards.
+"""
     )
+
 
     return insights

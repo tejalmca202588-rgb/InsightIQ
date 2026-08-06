@@ -34,7 +34,7 @@ from src.filters import apply_filters
 from src.heatmap import create_correlation_heatmap
 from src.reports import generate_report
 from src.pdf_report import generate_pdf
-from src.chatbot import ask_dataset
+from src.ai_analyst import AIAnalyst
 from src.data_quality import get_data_quality
 
 # =============================================================
@@ -546,7 +546,7 @@ elif option == "Data Cleaning":
 
     else:
         df = st.session_state.df
-
+       
         try:
             st.subheader("Missing Values")
             st.dataframe(get_missing_values(df), use_container_width=True)
@@ -853,7 +853,7 @@ elif option == "AI Chat":
     else:
 
         df = st.session_state.df
-
+        ai = AIAnalyst(df)
 
         st.write(
             "Ask questions about your dataset like a business analyst."
@@ -948,191 +948,35 @@ elif option == "AI Chat":
             else:
 
 
-                # Rows
+                result = ai.analyze(question)
 
-                if "row" in question:
+                if result["type"] == "summary":
 
+                   answer = result["data"].to_string()
 
-                    answer = (
+                elif result["type"] == "table":
 
-                        f"📌 Your dataset contains "
+                    answer = result["data"].to_string(index=False)
 
-                        f"{df.shape[0]:,} rows."
+                elif result["type"] == "list":
 
+                    answer = "\n".join(result["items"])
+
+                elif result["type"] == "text":
+
+                    answer = result["message"]
+                elif result["type"] == "chart":
+
+                     st.plotly_chart(
+                         result["chart"],
+                         use_container_width=True
                     )
 
-
-
-                # Columns
-
-                elif "column" in question:
-
-
-                    answer = (
-
-                        f"📌 Your dataset contains "
-
-                        f"{df.shape[1]} columns."
-
-                    )
-
-
-
-                # Missing values
-
-                elif "missing" in question:
-
-
-                    answer = (
-
-                        f"📌 Missing values found: "
-
-                        f"{df.isnull().sum().sum()}"
-
-                    )
-
-
-
-                # Duplicate
-
-                elif "duplicate" in question:
-
-
-                    answer = (
-
-                        f"📌 Duplicate rows found: "
-
-                        f"{df.duplicated().sum()}"
-
-                    )
-
-
-
-                # Numeric columns
-
-                elif "numeric" in question:
-
-
-                    answer = (
-
-                        "🔢 Numeric columns:\n\n"
-
-                        +
-
-                        ", ".join(
-
-                            df.select_dtypes(
-
-                                include="number"
-
-                            ).columns
-
-                        )
-
-                    )
-
-
-
-                # Categorical columns
-
-                elif "categorical" in question:
-
-
-                    answer = (
-
-                        "📂 Categorical columns:\n\n"
-
-                        +
-
-                        ", ".join(
-
-                            df.select_dtypes(
-
-                                exclude="number"
-
-                            ).columns
-
-                        )
-
-                    )
-
-
-
-                # Summary
-
-                elif "summary" in question:
-
-
-                    answer = (
-
-                        "📊 Dataset Summary\n\n"
-
-                        f"Rows: {df.shape[0]:,}\n"
-
-                        f"Columns: {df.shape[1]}\n"
-
-                        f"Missing Values: {df.isnull().sum().sum()}\n"
-
-                        f"Duplicate Rows: {df.duplicated().sum()}"
-
-                    )
-
-
-
-                # AI Insights Integration ⭐
-
-                elif (
-
-                    "insight" in question
-
-                    or "recommendation" in question
-
-                    or "analysis" in question
-
-                ):
-
-
-                    insights = generate_insights(df)
-
-
-                    answer = (
-
-                        "🤖 AI Generated Insights:\n\n"
-
-                        +
-
-                        "\n\n".join(insights)
-
-                    )
-
-
+                     answer = result["message"]
 
                 else:
 
-
-                    answer = (
-
-                        "🤖 I can help you with:\n\n"
-
-                        "• Dataset summary\n"
-
-                        "• Rows and columns\n"
-
-                        "• Missing values\n"
-
-                        "• Duplicate records\n"
-
-                        "• Numeric columns\n"
-
-                        "• Categorical columns\n"
-
-                        "• Business insights\n"
-
-                        "• Recommendations"
-
-                    )
-
-
+                    answer = "Unable to process request." 
 
                 # Store conversation
 
