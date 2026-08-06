@@ -1,6 +1,8 @@
 import pandas as pd
 import plotly.express as px
 
+from src.analysis_planner import create_analysis_plan
+
 
 class AIAnalyst:
 
@@ -117,17 +119,22 @@ class AIAnalyst:
             )
 
 
+            analysis = create_analysis_plan(question)
+
+
             return {
                 "type": "chart",
                 "chart": fig,
                 "message":
-                "This histogram shows the distribution of transaction amounts."
+                "This histogram shows the distribution of transaction amounts.",
+                "plan": analysis["plan"],
+                "code": analysis["code"]
             }
 
 
 
         # =========================
-        # Compare Amount by Category
+        # Compare Amount by Channel
         # =========================
 
         elif (
@@ -151,11 +158,16 @@ class AIAnalyst:
             )
 
 
+            analysis = create_analysis_plan(question)
+
+
             return {
                 "type": "chart",
                 "chart": fig,
                 "message":
-                "This chart compares transaction amounts across channels."
+                "This chart compares transaction amounts across channels.",
+                "plan": analysis["plan"],
+                "code": analysis["code"]
             }
 
 
@@ -177,14 +189,23 @@ class AIAnalyst:
             )
 
 
+            analysis = create_analysis_plan(question)
+
+
             return {
                 "type": "chart",
                 "chart": fig,
                 "message":
-                "This scatter plot shows the relationship between fee and tax amount."
+                "This scatter plot shows the relationship between fee and tax amount.",
+                "plan": analysis["plan"],
+                "code": analysis["code"]
             }
 
 
+
+        # =========================
+        # Unknown Question
+        # =========================
 
         else:
 

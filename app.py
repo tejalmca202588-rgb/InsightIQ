@@ -967,10 +967,28 @@ elif option == "AI Chat":
                     answer = result["message"]
                 elif result["type"] == "chart":
 
-                     st.plotly_chart(
-                         result["chart"],
-                         use_container_width=True
+
+                     st.subheader("🧠 Analysis Plan")
+
+                     for step in result["plan"]:
+                         st.write("✔ " + step)
+
+
+                     st.subheader("🐍 Generated Python Code")
+
+                     st.code(
+                        result["code"],
+                        language="python"
                     )
+
+
+                     st.subheader("📊 Visualization")
+
+                     st.plotly_chart(
+                       result["chart"],
+                       use_container_width=True
+                     ) 
+
 
                      answer = result["message"]
 
