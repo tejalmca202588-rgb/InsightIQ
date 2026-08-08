@@ -36,7 +36,8 @@ from src.reports import generate_report
 from src.pdf_report import generate_pdf
 from src.ai_analyst import AIAnalyst
 from src.data_quality import get_data_quality
-
+from src.column_mapper import detect_columns
+from src.chatbot import ask_dataset
 # =============================================================
 # Cached wrappers
 # =============================================================
@@ -844,11 +845,9 @@ elif option == "AI Chat":
 
     section_header("💬 AI Chat Assistant")
 
-
     if st.session_state.df is None:
 
         st.warning("Please upload a dataset first.")
-
 
     else:
 
@@ -859,22 +858,14 @@ elif option == "AI Chat":
             "Ask questions about your dataset like a business analyst."
         )
 
-
         # Initialize chat history
-
         if "chat_history" not in st.session_state:
-
             st.session_state.chat_history = []
 
-
-
         # Suggested Questions
-
         st.markdown("### 💡 Try asking:")
 
-
         col1, col2, col3 = st.columns(3)
-
 
         with col1:
 
@@ -885,8 +876,6 @@ elif option == "AI Chat":
 
                 user_question = "summary"
 
-
-
         with col2:
 
             if st.button(
@@ -895,8 +884,6 @@ elif option == "AI Chat":
             ):
 
                 user_question = "missing values"
-
-
 
         with col3:
 
@@ -907,155 +894,195 @@ elif option == "AI Chat":
 
                 user_question = "numeric columns"
 
-
-
         # User Input
-
         user_input = st.text_input(
-
             "Ask your question",
-
             placeholder="Example: Give me insights about this dataset",
-
             key="chat_input"
-
         )
-
-
 
         ask = st.button(
             "🚀 Ask InsightIQ",
             key="ask_button"
         )
 
-
+        # =====================================================
+        # Process Question
+        # =====================================================
 
         if ask:
 
+            question = user_input.strip().lower()
 
-            question = user_input.lower()
-
-
-
-            if question.strip() == "":
+            if question == "":
 
                 st.warning(
                     "Please enter a question."
                 )
 
-
-
             else:
 
-
+                # Send question to AI Analyst
                 result = ai.analyze(question)
+
+                # =================================================
+                # Summary
+                # =================================================
 
                 if result["type"] == "summary":
 
-                   answer = result["data"].to_string()
+                    answer = result["data"].to_string()
+
+                    st.subheader("📊 Dataset Summary")
+
+                    st.dataframe(
+                        result["data"],
+                        use_container_width=True
+                    )
+
+                # =================================================
+                # Table
+                # =================================================
 
                 elif result["type"] == "table":
 
-                    answer = result["data"].to_string(index=False)
+                    answer = result["data"].to_string(
+                        index=False
+                    )
+
+                    st.subheader(
+                        "📋 " + result["title"]
+                    )
+
+                    st.dataframe(
+                        result["data"],
+                        use_container_width=True
+                    )
+
+                # =================================================
+                # List
+                # =================================================
 
                 elif result["type"] == "list":
 
-                    answer = "\n".join(result["items"])
+                    answer = "\n".join(
+                        result["items"]
+                    )
+
+                    st.subheader(
+                        "🔢 " + result["title"]
+                    )
+
+                    for item in result["items"]:
+
+                        st.write(
+                            "• " + item
+                        )
+
+                # =================================================
+                # Text
+                # =================================================
 
                 elif result["type"] == "text":
 
                     answer = result["message"]
+
+                    st.write(answer)
+
+                # =================================================
+                # Chart
+                # =================================================
+
                 elif result["type"] == "chart":
 
+                    answer = result["message"]
 
-                     st.subheader("🧠 Analysis Plan")
+                    # Analysis Plan
+                    st.subheader(
+                        "🧠 Analysis Plan"
+                    )
 
-                     for step in result["plan"]:
-                         st.write("✔ " + step)
+                    for step in result["plan"]:
 
+                        st.write(
+                            "✔ " + step
+                        )
 
-                     st.subheader("🐍 Generated Python Code")
+                    # Generated Code
+                    st.subheader(
+                        "🐍 Generated Python Code"
+                    )
 
-                     st.code(
+                    st.code(
                         result["code"],
                         language="python"
                     )
 
+                    # Visualization
+                    st.subheader(
+                        "📊 Visualization"
+                    )
 
-                     st.subheader("📊 Visualization")
+                    st.plotly_chart(
+                        result["chart"],
+                        use_container_width=True
+                    )
 
-                     st.plotly_chart(
-                       result["chart"],
-                       use_container_width=True
-                     ) 
+                    # Explanation
+                    st.info(
+                        result["message"]
+                    )
 
-
-                     answer = result["message"]
+                # =================================================
+                # Unknown Result
+                # =================================================
 
                 else:
 
-                    answer = "Unable to process request." 
+                    answer = (
+                        "Unable to process request."
+                    )
 
-                # Store conversation
+                # =================================================
+                # Store Conversation
+                # =================================================
 
                 st.session_state.chat_history.append(
-
                     {
-
                         "role": "user",
-
                         "message": user_input
-
                     }
-
                 )
-
-
 
                 st.session_state.chat_history.append(
-
                     {
-
                         "role": "assistant",
-
                         "message": answer
-
                     }
-
                 )
 
-
+        # =========================================================
+        # Chat History
+        # =========================================================
 
         st.divider()
 
-
-
-        # Display Chat History
-
         for chat in st.session_state.chat_history:
 
-
             if chat["role"] == "user":
-
 
                 with st.chat_message("user"):
 
                     st.write(
-
                         chat["message"]
-
                     )
 
-
             else:
-
 
                 with st.chat_message("assistant"):
 
                     st.write(
-
                         chat["message"]
-
                     )
                 
         # Reports

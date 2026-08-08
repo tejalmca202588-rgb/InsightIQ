@@ -2,6 +2,7 @@ import pandas as pd
 import plotly.express as px
 
 from src.analysis_planner import create_analysis_plan
+from src.column_mapper import detect_columns
 
 
 class AIAnalyst:
@@ -9,11 +10,15 @@ class AIAnalyst:
     def __init__(self, df):
         self.df = df
 
-
     def analyze(self, question):
 
         question = question.lower()
 
+        # Detect business-friendly column names
+        detected = detect_columns(
+            self.df,
+            question
+        )
 
         # =========================
         # Dataset Summary
@@ -25,7 +30,6 @@ class AIAnalyst:
                 "type": "summary",
                 "data": self.df.describe(include="all")
             }
-
 
         # =========================
         # Missing Values
@@ -46,7 +50,6 @@ class AIAnalyst:
                 )
             }
 
-
         # =========================
         # Duplicate Rows
         # =========================
@@ -60,8 +63,6 @@ class AIAnalyst:
                 "message":
                 f"Dataset contains {duplicates} duplicate rows."
             }
-
-
 
         # =========================
         # AI Insights
@@ -82,8 +83,6 @@ class AIAnalyst:
                 "message": "\n\n".join(insights)
             }
 
-
-
         # =========================
         # Numeric Columns
         # =========================
@@ -94,83 +93,87 @@ class AIAnalyst:
                 include="number"
             ).columns.tolist()
 
-
             return {
                 "type": "list",
                 "title": "Numeric Columns",
                 "items": cols
             }
 
-
-
-        # =========================
-        # Distribution Chart
+                # =========================
+        # Distribution Analysis
         # =========================
 
-        elif (
-            "distribution" in question
-            and "amount" in question
-        ):
+        elif "distribution" in question:
 
-            fig = px.histogram(
-                self.df,
-                x="amount",
-                title="Transaction Amount Distribution"
-            )
+            amount_column = detected.get("amount")
 
+            if amount_column:
 
-            analysis = create_analysis_plan(question)
+                fig = px.histogram(
+                    self.df,
+                    x=amount_column,
+                    title=f"{amount_column.title()} Distribution"
+                )
 
+                analysis = create_analysis_plan(question)
 
-            return {
-                "type": "chart",
-                "chart": fig,
-                "message":
-                "This histogram shows the distribution of transaction amounts.",
-                "plan": analysis["plan"],
-                "code": analysis["code"]
-            }
+                return {
+                    "type": "chart",
+                    "chart": fig,
+                    "message":
+                    f"This histogram shows the distribution of {amount_column}.",
+                    "plan": analysis["plan"],
+                    "code": analysis["code"]
+                }
 
+            else:
 
+                return {
+                    "type": "text",
+                    "message":
+                    "I could not identify a numerical column for the distribution analysis."
+                }
 
         # =========================
-        # Compare Amount by Channel
+        # Compare Amount by Category
         # =========================
 
         elif (
             "compare" in question
-            and "channel" in question
+            and detected.get("amount")
+            and detected.get("channel")
         ):
+
+            amount_column = detected["amount"]
+            channel_column = detected["channel"]
 
             data = (
                 self.df
-                .groupby("channel")["amount"]
+                .groupby(channel_column)[amount_column]
                 .sum()
                 .reset_index()
             )
 
-
             fig = px.bar(
                 data,
-                x="channel",
-                y="amount",
-                title="Total Transaction Amount by Channel"
+                x=channel_column,
+                y=amount_column,
+                title=(
+                    f"Total {amount_column.title()} "
+                    f"by {channel_column.title()}"
+                )
             )
 
-
             analysis = create_analysis_plan(question)
-
 
             return {
                 "type": "chart",
                 "chart": fig,
                 "message":
-                "This chart compares transaction amounts across channels.",
+                f"This chart compares {amount_column} across {channel_column}.",
                 "plan": analysis["plan"],
                 "code": analysis["code"]
             }
-
-
 
         # =========================
         # Relationship Analysis
@@ -188,9 +191,7 @@ class AIAnalyst:
                 title="Relationship Between Fee and Tax Amount"
             )
 
-
             analysis = create_analysis_plan(question)
-
 
             return {
                 "type": "chart",
@@ -200,8 +201,6 @@ class AIAnalyst:
                 "plan": analysis["plan"],
                 "code": analysis["code"]
             }
-
-
 
         # =========================
         # Unknown Question
